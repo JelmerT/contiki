@@ -32,51 +32,57 @@
 
 /**
  * \file
- *         A quick program for testing the HMC5843 driver on the Z1 platform
+ *         Device drivers header file for hmc5843 magnetometer sensor on Zolertia Z1.
  * \author
- *         Jelmer Tiete <jelmer@tiete.be>
+ *         Jelmer Tiete, VUB <jelmer@tiete.be>
+ *         Enric M. Calvo, Zolertia <ecalvo@zolertia.com>
+ *         Marcus Lundén, SICS <mlunden@sics.se>
  */
 
+#ifndef __HMC5843_H__
+#define __HMC5843_H__
 #include <stdio.h>
-#include "contiki.h"
-#include "dev/i2cmaster.h"
-#include "dev/hmc5843.h"
+#include "i2cmaster.h"
+
+/* -------------------------------------------------------------------------- */
+/* Init the temperature sensor: ports, pins, I2C, interrupts (XXX none so far),
+*/
+void  hmc5843_init(void);
+
+/* Write to a register.
+    args:
+      reg       register to write to
+      val       value to write
+*/
+void    hmc5843_write_reg(uint8_t reg, uint8_t val);
+
+/* Read heading in raw format
+    no args needed
+*/
+uint16_t hmc5843_get_values();
+
+/* -------------------------------------------------------------------------- */
+/* Reference definitions */
+/* hmc5843 slave address */
+#define HMC5843_ADDR           0x1E // this is the real slave address 0x3C for write 0x3D for read
+
+/* hmc5843 registers */
+#define HMC5843_CONFIG_A       0x00
+#define HMC5843_CONFIG_B       0x01
+#define HMC5843_MODE           0x02
+#define HMC5843_X_MSB          0x03
+#define HMC5843_X_LSB          0x04
+#define HMC5843_Y_MSB          0x05
+#define HMC5843_Y_LSB          0x06
+#define HMC5843_Z_MSB          0x07
+#define HMC5843_Z_LSB          0x08
+#define HMC5843_STATUS         0x09
+#define HMC5843_ID_A           0x10
+#define HMC5843_ID_B           0x11
+#define HMC5843_ID_C           0x12
+
+/* -------------------------------------------------------------------------- */
+#endif /* ifndef __HMC5843_H__ */
 
 
-#if 1
-#define PRINTF(...) printf(__VA_ARGS__)
-#else
-#define PRINTF(...)
-#endif
 
-
-#if 1
-#define PRINTFDEBUG(...) printf(__VA_ARGS__)
-#else
-#define PRINTFDEBUG(...)
-#endif
-
-
-#define HMC5843_READ_INTERVAL (CLOCK_SECOND/2)
-
-PROCESS(magn_process, "Test Magnetometer process");
-AUTOSTART_PROCESSES(&magn_process);
-/*---------------------------------------------------------------------------*/
-static struct etimer et;
-
-PROCESS_THREAD(magn_process, ev, data)
-{
-  PROCESS_BEGIN();
-
-  hmc5843_init(); //init i2c and hmc5843
-
-  while(1) {
-    etimer_set(&et, HMC5843_READ_INTERVAL);
-    PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
-
-    PRINTFDEBUG("Reading Heading...\n");
-    hmc5843_get_values();
-    //PRINTF("Heading = \n");
-  }
-  PROCESS_END();
-}
