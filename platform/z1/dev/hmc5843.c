@@ -46,7 +46,25 @@
 #include "hmc5843.h"
 
 #define PRINTFDEBUG(...) printf(__VA_ARGS__)
+/*---------------------------------------------------------------------------*/
+/* Write to a register.
+    args:
+      reg       register to write to
+      val       value to write
+*/
 
+void
+hmc5843_point_reg(uint8_t reg) {
+  uint8_t tx_buf[] = {reg};
+
+  i2c_transmitinit(HMC5843_ADDR);
+  while (i2c_busy());
+  PRINTFDEBUG("I2C Ready to TX\n");
+
+  i2c_transmit_n(1, tx_buf);
+  while (i2c_busy());
+  PRINTFDEBUG("POINT_REG @ reg 0x%02X\n", reg);
+}
 /*---------------------------------------------------------------------------*/
 /* Write to a register.
     args:
@@ -78,7 +96,9 @@ hmc5843_init (void)
 
   //make sure you have at least 8.3 milli-second brake after power-up! 
 
+
   hmc5843_write_reg(HMC5843_MODE, 0x00); // set continues mode (0x00) in mode register (0x02)
+ // hmc5843_point_reg(HMC5843_X_MSB);
 }
 
 
@@ -94,7 +114,7 @@ hmc5843_get_values ()
   // maintain 100 mili-second delay between queries!
 
   uint8_t buf[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-  uint16_t retVal,x,y,z = 0;
+  int16_t retVal,x,y,z,h = 0;
 
   // receive the data
   i2c_receiveinit (HMC5843_ADDR); //address pointer should be at 0x03, so just start reading
@@ -103,14 +123,15 @@ hmc5843_get_values ()
   while (i2c_busy ());
 
   // transmit the register to read //must reach 0x09 to go back to 0x03
-  //i2c_receiveinit (HMC5843_ADDR);
-  //while (i2c_busy ());
 
-  x = (uint16_t) (buf[0] << 8 | (buf[1]));
-  y = (uint16_t) (buf[2] << 8 | (buf[3]));
-  z = (uint16_t) (buf[4] << 8 | (buf[5]));
-	
-  PRINTFDEBUG ("x:%i y:%i z:%i status:0x%02X\n", x, y, z,buf[6]);
+
+  x = (int16_t) (buf[0] << 8 | (buf[1]));
+  y = (int16_t) (buf[2] << 8 | (buf[3]));
+  z = (int16_t) (buf[4] << 8 | (buf[5]));
+  h = y/x;
+  
+  PRINTFDEBUG ("x:%i y:%i z:%i heading:%i\n", x, y, z,h);
+  //PRINTFDEBUG ("x1:0x%02X x2:0x%02X y1:0x%02X y2:0x%02X z1:0x%02X z2:0x%02X s1:0x%02X\n", buf[0],buf[1], buf[2],buf[3], buf[4],buf[5], buf[6]);
 
   return retVal;
 }

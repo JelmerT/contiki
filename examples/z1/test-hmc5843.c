@@ -57,7 +57,7 @@
 #endif
 
 
-#define HMC5843_READ_INTERVAL (CLOCK_SECOND/2)
+#define HMC5843_READ_INTERVAL (CLOCK_SECOND)
 
 PROCESS(magn_process, "Test Magnetometer process");
 AUTOSTART_PROCESSES(&magn_process);

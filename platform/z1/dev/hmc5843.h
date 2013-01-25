@@ -77,9 +77,9 @@ uint16_t hmc5843_get_values();
 #define HMC5843_Z_MSB          0x07
 #define HMC5843_Z_LSB          0x08
 #define HMC5843_STATUS         0x09
-#define HMC5843_ID_A           0x10
-#define HMC5843_ID_B           0x11
-#define HMC5843_ID_C           0x12
+#define HMC5843_ID_A           0x0A
+#define HMC5843_ID_B           0x0B
+#define HMC5843_ID_C           0x0C
 
 /* -------------------------------------------------------------------------- */
 #endif /* ifndef __HMC5843_H__ */
