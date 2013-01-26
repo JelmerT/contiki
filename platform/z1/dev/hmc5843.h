@@ -47,24 +47,46 @@
 /* -------------------------------------------------------------------------- */
 /* Init the temperature sensor: ports, pins, I2C, interrupts (XXX none so far),
 */
-void  hmc5843_init(void);
+void hmc5843_init(void);
 
 /* Write to a register.
     args:
       reg       register to write to
       val       value to write
 */
-void    hmc5843_write_reg(uint8_t reg, uint8_t val);
+void hmc5843_write_reg(uint8_t reg, uint8_t val);
+void hmc5843_set_gain(unsigned char gain);
+void hmc5843_set_mode(unsigned char mode);
+uint8_t hmc5843_calibrate(unsigned char gain,uint16_t n_samples) ;
+void hmc5843_get_values(float *x,float *y,float *z);
 
 /* Read heading in raw format
-    no args needed
+    args:
+	x
+	y
+	z
 */
-uint16_t hmc5843_get_values();
+void hmc5843_get_raw(int16_t *x,int16_t *y,int16_t *z);
+
+void hmc5843_get_id(char id[3]);
 
 /* -------------------------------------------------------------------------- */
 /* Reference definitions */
 /* hmc5843 slave address */
 #define HMC5843_ADDR           0x1E // this is the real slave address 0x3C for write 0x3D for read
+
+#define HMC_POS_BIAS 1
+#define HMC_NEG_BIAS 2
+
+#define HMC58X3_X_SELF_TEST_GAUSS (+0.55)                       //!< X axis level when bias current is applied.
+#define HMC58X3_Y_SELF_TEST_GAUSS (HMC58X3_X_SELF_TEST_GAUSS)   //!< Y axis level when bias current is applied.
+#define HMC58X3_Z_SELF_TEST_GAUSS (HMC58X3_X_SELF_TEST_GAUSS)   //!< Y axis level when bias current is applied.
+
+/*
+    This is my best guess at the LOW, HIGH limit.  The data sheet does not have these values.
+*/
+#define SELF_TEST_LOW_LIMIT  (HMC58X3_X_SELF_TEST_GAUSS*0.53)   //!< Low limit 53% of expected value.
+#define SELF_TEST_HIGH_LIMIT (HMC58X3_X_SELF_TEST_GAUSS*1.36)   //!< High limit 136% of expected values.
 
 /* hmc5843 registers */
 #define HMC5843_CONFIG_A       0x00
