@@ -44,6 +44,21 @@
 #include <stdio.h>
 #include "dev/i2cmaster.h"
 
+/* Used in lsm303_xxx_read_axis(), eg lsm303_accm_read_axis(X_AXIS);*/
+enum LSM303_AXIS {
+  X_AXIS = 0,
+  Y_AXIS = 2,
+  Z_AXIS = 4,
+};
+
+typedef struct vector{
+      float x, y, z;
+    } vector;
+
+    vector a; // accelerometer readings
+    vector m; // magnetometer readings
+    vector m_max; // maximum magnetometer values, used for calibration
+    vector m_min; // minimum magnetometer values, used for calibration
 
 /* -------------------------------------------------------------------------- */
 /* Init the accelerometer: ports, pins, registers, interrupts (none enabled), I2C,
@@ -116,7 +131,15 @@ void    lsm303_magn_read_stream(uint8_t reg, uint8_t len, uint8_t *whereto);
   The resolution of the acceleration measurement can be increased up to 13 bit, but
   will change the data format of this read out. Refer to the data sheet if so is
   wanted/needed. */
-void    lsm303_magn_read(void);
+void lsm303_magn_read(void);
+void lsm303_accm_read(void);
+
+//int lsm303_heading(void);
+int lsm303_heading(vector from);
+void lsm303_vector_cross(const vector *a,const vector *b, vector *out);
+float lsm303_vector_dot(const vector *a,const vector *b);
+void lsm303_vector_normalize(vector *a);
+
 
 /* -------------------------------------------------------------------------- */
 /* Application definitions, change if required by application. */

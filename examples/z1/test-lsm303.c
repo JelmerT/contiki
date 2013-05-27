@@ -32,7 +32,7 @@
 
 /**
  * \file
- *         A simple program for testing the LSM303DLM 3-axis accelerometer and 
+ *         A simple program for testing the LSM303DLM 3-axis accelerometer and
  *         3-axis magnetometer on Zolertia Z1. Then
  *         starts a constantly running readout of acceleration data.
  * \author
@@ -60,9 +60,13 @@ PROCESS_THREAD(lsm303_process, ev, data) {
     lsm303_init();
 
     while (1) {
-
       lsm303_magn_read();
 
+      lsm303_accm_read();
+      printf("mx: %d my: %d mz: %d\n", (int)m.x, (int)m.y, (int)m.z);
+      printf("ax: %d ay: %d az: %d\n", (int)a.x, (int)a.y, (int)a.z);
+      printf("Heading: %d\n",lsm303_heading((vector){0,1,0}));
+	
       etimer_set(&et, MAGN_READ_INTERVAL);
       PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
     }

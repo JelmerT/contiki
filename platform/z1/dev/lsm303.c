@@ -46,6 +46,8 @@
 #include "contiki.h"
 #include "lsm303.h"
 #include "i2cmaster.h"
+#include "math.h"
+
 
 /*---------------------------------------------------------------------------*/
 /* Write to a register.
@@ -253,19 +255,106 @@ lsm303_init(void) {
 }
 
 /*---------------------------------------------------------------------------*/
-/* Reads the 3 magnetometer channels and stores them in vector m
+/* Reads a magnetometer channel
 */
 
-void 
+void
 lsm303_magn_read(void)
 {
-  int16_t xm,ym,zm = 0;
-  uint8_t xzym[6];
-  lsm303_magn_read_stream(LSM303_OUT_X_H_M,6,&xzym[0]);
+  uint8_t tmp[6];
 
-  xm = (int16_t)(xzym[1] | (xzym[0]<<8));
-  zm = (int16_t)(xzym[3] | (xzym[2]<<8));
-  ym = (int16_t)(xzym[5] | (xzym[4]<<8));
+  lsm303_magn_read_stream(LSM303_OUT_X_H_M, 6, &tmp[0]);
 
-  printf("Magneto: x- %i y- %i z- %i \n",xm,ym,zm);
+
+  m.x = (int16_t)(tmp[0] << 8 | tmp[1]);
+  m.y = (int16_t)(tmp[4] << 8 | tmp[5]);
+  m.z = (int16_t)(tmp[2] << 8 | tmp[3]);
+}
+
+/*---------------------------------------------------------------------------*/
+/* Reads a accm channel
+*/
+
+void
+lsm303_accm_read(void)
+{
+
+  uint8_t tmp[6];
+
+  lsm303_accm_read_stream((LSM303_OUT_X_L_A | (1 << 7)), 6, &tmp[0]);
+
+  // combine high and low bytes, then shift right to discard lowest 4 bits (which are meaningless)
+  a.x = ((int16_t)(tmp[1] << 8 | tmp[0])) >> 4;
+  a.y = ((int16_t)(tmp[3] << 8 | tmp[2])) >> 4;
+  a.z = ((int16_t)(tmp[5] << 8 | tmp[4])) >> 4;
+}
+
+
+
+// Returns the number of degrees from the -Y axis that it
+// is pointing.
+//int lsm303_heading(void)
+//{
+//  return heading((vector){0,-1,0});
+//}
+
+// Returns the number of degrees from the From vector projected into
+// the horizontal plane is away from north.
+//
+// Description of heading algorithm:
+// Shift and scale the magnetic reading based on calibration data to
+// to find the North vector. Use the acceleration readings to
+// determine the Down vector. The cross product of North and Down
+// vectors is East. The vectors East and North form a basis for the
+// horizontal plane. The From vector is projected into the horizontal
+// plane and the angle between the projected vector and north is
+// returned.
+int lsm303_heading(vector from)
+{
+
+  // These are just some values for a particular unit; it is recommended that
+  // a calibration be done for your particular unit.
+  m_max.x = +540; m_max.y = +500; m_max.z = 180;
+  m_min.x = -520; m_min.y = -570; m_min.z = -770;
+
+    // shift and scale
+    m.x = (m.x - m_min.x) / (m_max.x - m_min.x) * 2 - 1.0;
+    m.y = (m.y - m_min.y) / (m_max.y - m_min.y) * 2 - 1.0;
+    m.z = (m.z - m_min.z) / (m_max.z - m_min.z) * 2 - 1.0;
+
+    vector temp_a = a;
+    // normalize
+    lsm303_vector_normalize(&temp_a);
+
+    // compute E and N
+    vector E;
+    vector No;
+    lsm303_vector_cross(&m, &temp_a, &E);
+    lsm303_vector_normalize(&E);
+    lsm303_vector_cross(&temp_a, &E, &No);
+
+    // compute heading
+    int heading = /*round*/(atan2(lsm303_vector_dot(&E, &from), lsm303_vector_dot(&No, &from)) * 180 / M_PI);
+    if (heading < 0) heading += 360;
+  return heading;
+}
+
+void lsm303_vector_cross(const vector *a,const vector *b, vector *out)
+{
+  out->x = a->y*b->z - a->z*b->y;
+  out->y = a->z*b->x - a->x*b->z;
+  out->z = a->x*b->y - a->y*b->x;
+}
+
+float lsm303_vector_dot(const vector *a,const vector *b)
+{
+  return a->x*b->x+a->y*b->y+a->z*b->z;
+}
+
+void lsm303_vector_normalize(vector *a)
+{
+  float mag = sqrtf(lsm303_vector_dot(a,a));
+  a->x /= mag;
+  a->y /= mag;
+  a->z /= mag;
 }
