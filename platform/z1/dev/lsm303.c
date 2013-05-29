@@ -297,7 +297,7 @@ lsm303_accm_read(void)
 
   lsm303_accm_read_stream((LSM303_OUT_X_L_A | (1 << 7)), 6, &tmp[0]);
 
-  /* combine high and low bytes, then shift right to discard lowest 4 bits (which are meaningless)*/
+  /* combine high and low bytes, then shift right to discard lowest 4 bits (which are meaningless) */
   a.x = ((int16_t) (tmp[1] << 8 | tmp[0])) >> 4;
   a.y = ((int16_t) (tmp[3] << 8 | tmp[2])) >> 4;
   a.z = ((int16_t) (tmp[5] << 8 | tmp[4])) >> 4;
@@ -338,36 +338,35 @@ lsm303_heading(vector from)
   m_min.y = -570;
   m_min.z = -770;
 
-  /* shift and scale*/
+  /* shift and scale */
   m.x = (m.x - m_min.x) / (m_max.x - m_min.x) * 2 - 1.0;
   m.y = (m.y - m_min.y) / (m_max.y - m_min.y) * 2 - 1.0;
   m.z = (m.z - m_min.z) / (m_max.z - m_min.z) * 2 - 1.0;
 
   vector temp_a = a;
 
-  /* normalize*/
-  lsm303_vector_normalize(&temp_a);
+  /* normalize */
+  vector_normalize(&temp_a);
 
-  /* compute E and N*/
+  /* compute E and N */
   vector E;
   vector No;
 
-  lsm303_vector_cross(&m, &temp_a, &E);
-  lsm303_vector_normalize(&E);
-  lsm303_vector_cross(&temp_a, &E, &No);
+  vector_cross(&m, &temp_a, &E);
+  vector_normalize(&E);
+  vector_cross(&temp_a, &E, &No);
 
-  /* compute heading*/
-  int heading =/*round */(atan2(lsm303_vector_dot(&E, &from), lsm303_vector_dot(&No, &from)) * 180 /
-   M_PI);
-  if(heading < 0)
- {
+  /* compute heading */
+  int heading =
+    (atan2(vector_dot(&E, &from), vector_dot(&No, &from)) * 180 / M_PI);
+  if(heading < 0) {
     heading += 360;
-}
+  }
   return heading;
 }
 
 void
-lsm303_vector_cross(const vector * a, const vector * b, vector * out)
+vector_cross(const vector * a, const vector * b, vector * out)
 {
   out->x = a->y * b->z - a->z * b->y;
   out->y = a->z * b->x - a->x * b->z;
@@ -375,15 +374,15 @@ lsm303_vector_cross(const vector * a, const vector * b, vector * out)
 }
 
 float
-lsm303_vector_dot(const vector * a, const vector * b)
+vector_dot(const vector * a, const vector * b)
 {
   return a->x * b->x + a->y * b->y + a->z * b->z;
 }
 
 void
-lsm303_vector_normalize(vector * a)
+vector_normalize(vector * a)
 {
-  float mag = sqrtf(lsm303_vector_dot(a, a));
+  float mag = sqrtf(vector_dot(a, a));
 
   a->x /= mag;
   a->y /= mag;
