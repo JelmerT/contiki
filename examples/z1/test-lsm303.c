@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, Swedish Institute of Computer Science.
+ * Copyright (c) 2013, Swedish Institute of Computer Science.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -53,20 +53,22 @@ AUTOSTART_PROCESSES(&lsm303_process);
 
 static struct etimer et;
 
-PROCESS_THREAD(lsm303_process, ev, data) {
+PROCESS_THREAD(lsm303_process, ev, data)
+{
   PROCESS_BEGIN();
   {
     /* Start and setup the accelerometer with default values, eg no interrupts enabled. */
     lsm303_init();
 
-    while (1) {
+    while(1) {
       lsm303_magn_read();
-
       lsm303_accm_read();
+
       printf("mx: %d my: %d mz: %d\n", (int)m.x, (int)m.y, (int)m.z);
       printf("ax: %d ay: %d az: %d\n", (int)a.x, (int)a.y, (int)a.z);
-      printf("Heading: %d\n",lsm303_heading((vector){0,1,0}));
-	
+      printf("Heading: %d\n", lsm303_heading((vector) {
+                                             0, 1, 0}));
+
       etimer_set(&et, MAGN_READ_INTERVAL);
       PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
     }
@@ -75,4 +77,3 @@ PROCESS_THREAD(lsm303_process, ev, data) {
 }
 
 /*---------------------------------------------------------------------------*/
-
